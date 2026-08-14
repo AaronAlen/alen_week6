@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import API from '../services/api';
 import TaskCard from '../components/TaskCard';
 import TaskForm from '../components/TaskForm';
@@ -7,7 +8,6 @@ export default function Dashboard({ user }) {
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [editingTask, setEditingTask] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [page, setPage] = useState(1);
@@ -15,13 +15,12 @@ export default function Dashboard({ user }) {
 
   const fetchTasks = async (currentPage = page) => {
     setLoading(true);
-    setError('');
     try {
       const { data } = await API.get(`/tasks?page=${currentPage}&limit=6`);
       setTasks(data.tasks);
       setTotalPages(data.totalPages || 1);
     } catch (err) {
-      setError(err.response?.data?.message || 'Error fetching tasks.');
+      toast.error(err.response?.data?.message || 'Error fetching tasks.');
     } finally {
       setLoading(false);
     }
@@ -39,33 +38,32 @@ export default function Dashboard({ user }) {
   const handleCreateTask = async (taskData) => {
     try {
       const { data } = await API.post('/tasks', taskData);
-      if (data.message) {
-        alert(data.message);
-      }
+      toast.success(data.message || 'Task created successfully.');
       setShowCreateForm(false);
       fetchTasks(1); // Reset to page 1
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to create task.');
+      toast.error(err.response?.data?.message || 'Failed to create task.');
     }
   };
 
   const handleUpdateTask = async (taskData) => {
     try {
-      await API.put(`/tasks/${editingTask.id}`, taskData);
+      const { data } = await API.put(`/tasks/${editingTask.id}`, taskData);
+      toast.success(data.message || 'Task updated successfully.');
       setEditingTask(null);
       fetchTasks(page);
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update task.');
+      toast.error(err.response?.data?.message || 'Failed to update task.');
     }
   };
 
   const handleDeleteTask = async (taskId) => {
-    if (!window.confirm('Are you sure you want to delete this task?')) return;
     try {
-      await API.delete(`/tasks/${taskId}`);
+      const { data } = await API.delete(`/tasks/${taskId}`);
+      toast.success(data.message || 'Task deleted successfully.');
       fetchTasks(page);
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete task.');
+      toast.error(err.response?.data?.message || 'Failed to delete task.');
     }
   };
 
@@ -73,9 +71,10 @@ export default function Dashboard({ user }) {
     const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED';
     try {
       await API.put(`/tasks/${task.id}`, { status: newStatus });
+      toast.info(`Task status updated to ${newStatus}.`);
       fetchTasks(page);
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update task status.');
+      toast.error(err.response?.data?.message || 'Failed to update task status.');
     }
   };
 
@@ -97,8 +96,6 @@ export default function Dashboard({ user }) {
           {showCreateForm ? 'Close Form' : '➕ Create Task'}
         </button>
       </div>
-
-      {error && <div className="alert alert-danger">{error}</div>}
 
       {/* CREATE FORM */}
       {showCreateForm && (

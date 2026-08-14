@@ -85,6 +85,9 @@ body {
   padding: 1.5rem;
   margin-bottom: 1rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  overflow: hidden;
 }
 
 .auth-card {
@@ -185,17 +188,6 @@ textarea.form-control {
   background: rgba(255, 255, 255, 0.15);
 }
 
-.btn-google {
-  width: 100%;
-  background: #fff;
-  color: #1e293b;
-  margin-top: 1rem;
-  font-weight: 600;
-}
-
-.btn-google:hover {
-  background: #f1f5f9;
-}
 
 /* BADGES */
 .badge {
@@ -265,8 +257,9 @@ th {
 /* GRID LAYOUTS */
 .grid-2 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1.5rem;
+  align-items: stretch;
 }
 
 .stat-grid {

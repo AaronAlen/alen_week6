@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import API from '../services/api';
 
 export default function Admin() {
@@ -6,11 +7,9 @@ export default function Admin() {
   const [stats, setStats] = useState([]);
   const [recentLogs, setRecentLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   const fetchAdminData = async () => {
     setLoading(true);
-    setError('');
     try {
       const [usersRes, activityRes] = await Promise.all([
         API.get('/admin/users'),
@@ -21,7 +20,7 @@ export default function Admin() {
       setStats(activityRes.data.stats || []);
       setRecentLogs(activityRes.data.recentLogs || []);
     } catch (err) {
-      setError(err.response?.data?.message || 'Access denied or error fetching admin data.');
+      toast.error(err.response?.data?.message || 'Access denied or error fetching admin data.');
     } finally {
       setLoading(false);
     }
@@ -33,20 +32,21 @@ export default function Admin() {
 
   const handleRoleChange = async (userId, newRole) => {
     try {
-      await API.patch(`/admin/users/${userId}/role`, { role: newRole });
+      const { data } = await API.patch(`/admin/users/${userId}/role`, { role: newRole });
+      toast.success(data.message || `User role updated to ${newRole}.`);
       fetchAdminData();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update role.');
+      toast.error(err.response?.data?.message || 'Failed to update role.');
     }
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user? All their tasks will be deleted.')) return;
     try {
-      await API.delete(`/admin/users/${userId}`);
+      const { data } = await API.delete(`/admin/users/${userId}`);
+      toast.success(data.message || 'User deleted successfully.');
       fetchAdminData();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete user.');
+      toast.error(err.response?.data?.message || 'Failed to delete user.');
     }
   };
 
@@ -60,8 +60,6 @@ export default function Admin() {
         <h1 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.25rem' }}>👑 Admin Dashboard</h1>
         <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>User Role Management (MySQL) & Audit Analytics (MongoDB Aggregations)</p>
       </div>
-
-      {error && <div className="alert alert-danger">{error}</div>}
 
       {/* STATS OVERVIEW */}
       <div className="stat-grid">

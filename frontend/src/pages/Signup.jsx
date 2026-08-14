@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import API from '../services/api';
 
 export default function Signup({ onLoginSuccess }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
@@ -21,10 +20,12 @@ export default function Signup({ onLoginSuccess }) {
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('user', JSON.stringify(data.user));
 
+      toast.success('Account created successfully!');
       onLoginSuccess(data.user);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create account.');
+      const errMsg = err.response?.data?.message || 'Failed to create account.';
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -34,8 +35,6 @@ export default function Signup({ onLoginSuccess }) {
     <div className="auth-card card">
       <h2 className="auth-title">Create Account</h2>
       <p className="auth-subtitle">Join the team task manager</p>
-
-      {error && <div className="alert alert-danger">{error}</div>}
 
       <form onSubmit={handleSignup}>
         <div className="form-group">

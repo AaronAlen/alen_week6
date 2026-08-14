@@ -48,10 +48,17 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Resource not found.' });
 });
 
-// Global Error Handler (Prevents sensitive internal stack traces from leaking to client)
+// Global Error Handler (Centralized error processing)
 app.use((err, req, res, next) => {
-  console.error('Unhandled Application Error:', err);
-  res.status(500).json({ message: 'An unexpected server error occurred.' });
+  const statusCode = err.statusCode || err.status || 500;
+  const message = err.message || 'An unexpected server error occurred.';
+
+  // Log internal server errors (500) for debugging
+  if (statusCode === 500) {
+    console.error('Unhandled Server Error:', err);
+  }
+
+  res.status(statusCode).json({ message });
 });
 
 module.exports = app;

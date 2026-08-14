@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import API from './services/api';
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
@@ -26,6 +28,7 @@ export default function App() {
   const handleLogout = async () => {
     try {
       await API.post('/auth/logout');
+      toast.success('Logged out successfully.');
     } catch (err) {
       console.error('Logout error:', err);
     }
@@ -40,6 +43,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
       <Navbar user={user} onLogout={handleLogout} />
       <Routes>
         <Route 
