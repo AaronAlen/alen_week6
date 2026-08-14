@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 
 const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
@@ -18,7 +19,10 @@ app.use(cors({
   credentials: true
 }));
 
-// 3. API Security: Rate Limiting (Prevents Brute-Force login & DoS attacks)
+// 3. Cookie Parsing Middleware
+app.use(cookieParser());
+
+// 4. API Security: Rate Limiting (Prevents Brute-Force login & DoS attacks)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs

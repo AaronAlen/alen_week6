@@ -8,6 +8,14 @@ const appEventEmitter = require('../events/taskEvents');
  * Handles User Registration, Password Hashing, Login, Token Generation & Refresh
  */
 
+// Cookie Options for Refresh Token (HttpOnly for XSS security)
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax', // Supports cross-site credentialed API requests in dev
+  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+};
+
 // REGISTER
 exports.register = async (req, res) => {
   try {
@@ -54,10 +62,12 @@ exports.register = async (req, res) => {
     const accessToken = generateAccessToken(newUser);
     const refreshToken = generateRefreshToken(newUser);
 
+    // Send Refresh Token in HttpOnly cookie
+    res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS);
+
     return res.status(201).json({
       message: 'User registered successfully.',
       accessToken,
-      refreshToken,
       user: {
         id: newUser.id,
         name: newUser.name,
@@ -103,10 +113,12 @@ exports.login = async (req, res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
+    // Send Refresh Token in HttpOnly cookie
+    res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS);
+
     return res.json({
       message: 'Login successful.',
       accessToken,
-      refreshToken,
       user: {
         id: user.id,
         name: user.name,
@@ -124,7 +136,8 @@ exports.login = async (req, res) => {
 // REFRESH TOKEN
 exports.refresh = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    // Extract refresh token from HttpOnly cookie (fallback to req.body.refreshToken)
+    const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
 
     if (!refreshToken) {
       return res.status(400).json({ message: 'Refresh token is required.' });
@@ -153,7 +166,8 @@ exports.refresh = async (req, res) => {
 
 // LOGOUT
 exports.logout = (req, res) => {
-  return res.json({ message: 'Logout successful. Please clear stored tokens on the client.' });
+  res.clearCookie('refreshToken', COOKIE_OPTIONS);
+  return res.json({ message: 'Logout successful.' });
 };
 
 // GET PROFILE

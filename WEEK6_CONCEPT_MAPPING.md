@@ -38,7 +38,8 @@ Use this order during your live demonstration:
 
 2. **Demo 2 — Login & Dual Token Issuance**
    * Login with your credentials.
-   * Open Browser DevTools -> Application -> LocalStorage: Show `accessToken` and `refreshToken`.
+   * Open Browser DevTools -> Application -> LocalStorage: Show `accessToken`.
+   * Open Browser DevTools -> Application -> Cookies: Show `refreshToken` stored in HttpOnly Cookie.
 
 3. **Demo 3 — Task CRUD & Resource Ownership**
    * Create a new task.
