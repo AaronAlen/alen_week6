@@ -9,6 +9,11 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   try {
     // 1. Connect and Sync MySQL Database via Sequelize
+    const dbTarget = process.env.MYSQL_URL || process.env.DATABASE_URL
+      ? 'remote connection string (MYSQL_URL/DATABASE_URL)'
+      : `${process.env.MYSQL_HOST || 'localhost'}:${process.env.MYSQL_PORT || 3306}`;
+    console.log(`Connecting to MySQL database at: ${dbTarget}...`);
+
     await sequelize.authenticate();
     console.log('MySQL Database connected successfully.');
     
@@ -26,6 +31,9 @@ const startServer = async () => {
 
   } catch (error) {
     console.error('Failed to start server:', error);
+    if (error.name === 'SequelizeConnectionRefusedError') {
+      console.error('\n[HINT] Could not connect to MySQL. On Render, set your remote cloud MySQL URL/credentials in the Render Environment Variables tab.\n');
+    }
     process.exit(1);
   }
 };
