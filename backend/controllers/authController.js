@@ -10,11 +10,13 @@ const appEventEmitter = require('../events/taskEvents');
  * (Uses http-errors package and express-async-errors middleware)
  */
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 // Cookie Options for Refresh Token (HttpOnly for XSS security)
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax', // Supports cross-site credentialed API requests in dev
+  secure: isProduction,
+  sameSite: isProduction ? 'none' : 'lax', // 'none' required for cross-domain requests between Render frontend & backend
   maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
 };
 

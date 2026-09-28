@@ -9,8 +9,12 @@ import axios from 'axios';
  *    /api/auth/refresh to fetch a new access token without logging out the user!
  */
 
+const rawApiUrl = import.meta.env.VITE_API_URL || '';
+const cleanUrl = rawApiUrl.replace(/\/$/, '');
+const baseURL = cleanUrl ? (cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`) : '/api';
+
 const API = axios.create({
-  baseURL: '/api',
+  baseURL,
   withCredentials: true
 });
 
