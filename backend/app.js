@@ -14,8 +14,23 @@ const app = express();
 app.use(helmet());
 
 // 2. API Security: CORS configuration
+const clientUrl = process.env.CLIENT_URL?.replace(/\/$/, '');
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow non-browser requests (Postman, health checks)
+    if (!origin) return callback(null, true);
+    // Allow matching clientUrl, local dev, or vercel preview/prod apps
+    if (
+      !clientUrl ||
+      clientUrl === '*' ||
+      origin === clientUrl ||
+      origin === 'http://localhost:5173' ||
+      origin.endsWith('.vercel.app')
+    ) {
+      return callback(null, true);
+    }
+    return callback(new Error('CORS request blocked by security policy'));
+  },
   credentials: true
 }));
 
