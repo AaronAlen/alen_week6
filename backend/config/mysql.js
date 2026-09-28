@@ -9,12 +9,35 @@ require('dotenv').config();
  */
 
 const isProduction = process.env.NODE_ENV === 'production';
-const dbUrl = process.env.MYSQL_URL || process.env.DATABASE_URL;
+const rawUrl = process.env.MYSQL_URL || process.env.DATABASE_URL;
+
+let dbConfig = null;
+
+if (rawUrl) {
+  try {
+    const urlObj = new URL(rawUrl);
+    const pathDb = urlObj.pathname.replace(/^\//, '');
+    dbConfig = {
+      database: pathDb || process.env.MYSQL_DATABASE || 'test',
+      username: decodeURIComponent(urlObj.username),
+      password: decodeURIComponent(urlObj.password),
+      host: urlObj.hostname,
+      port: Number(urlObj.port) || 4000,
+    };
+  } catch (err) {
+    console.error('Failed to parse MYSQL_URL:', err.message);
+  }
+}
+
+const host = dbConfig?.host || process.env.MYSQL_HOST || 'localhost';
+const database = dbConfig?.database || process.env.MYSQL_DATABASE || 'week6_task_manager';
+const username = dbConfig?.username || process.env.MYSQL_USER || 'root';
+const password = dbConfig?.password !== undefined ? dbConfig.password : (process.env.MYSQL_PASSWORD || '');
+const port = dbConfig?.port || Number(process.env.MYSQL_PORT) || 3306;
 
 // Remote cloud MySQL databases (TiDB, Aiven, etc.) require SSL
 const useSSL = process.env.MYSQL_SSL === 'true' || 
-  Boolean(dbUrl && !dbUrl.includes('localhost') && !dbUrl.includes('127.0.0.1')) ||
-  (Boolean(process.env.MYSQL_HOST) && process.env.MYSQL_HOST !== 'localhost' && process.env.MYSQL_HOST !== '127.0.0.1');
+  (host && host !== 'localhost' && host !== '127.0.0.1');
 
 const dialectOptions = useSSL ? {
   ssl: {
@@ -30,26 +53,14 @@ const poolConfig = {
   idle: 10000     // Maximum time (ms) a connection can be idle before being released
 };
 
-const sequelize = dbUrl
-  ? new Sequelize(dbUrl, {
-      dialect: 'mysql',
-      logging: isProduction ? false : console.log,
-      dialectOptions,
-      pool: poolConfig
-    })
-  : new Sequelize(
-      process.env.MYSQL_DATABASE || 'week6_task_manager',
-      process.env.MYSQL_USER || 'root',
-      process.env.MYSQL_PASSWORD || '',
-      {
-        host: process.env.MYSQL_HOST || 'localhost',
-        port: Number(process.env.MYSQL_PORT) || 3306,
-        dialect: 'mysql',
-        logging: isProduction ? false : console.log,
-        dialectOptions,
-        pool: poolConfig
-      }
-    );
+const sequelize = new Sequelize(database, username, password, {
+  host,
+  port,
+  dialect: 'mysql',
+  logging: isProduction ? false : console.log,
+  dialectOptions,
+  pool: poolConfig
+});
 
 module.exports = sequelize;
 
