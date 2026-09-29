@@ -1,6 +1,6 @@
 require('dotenv').config();
 const app = require('./app');
-const { sequelize } = require('./models');
+const { sequelize, User, Task } = require('./models');
 const connectMongoDB = require('./config/mongodb');
 
 
@@ -24,6 +24,50 @@ const startServer = async () => {
     // Sync models (creates tables & indexes if they don't exist)
     await sequelize.sync({ alter: false });
     console.log('MySQL Models & Indexes synced.');
+
+    // Auto-seed initial demo accounts if database is empty
+    const userCount = await User.count();
+    if (userCount === 0) {
+      console.log('Seeding initial demo accounts into database...');
+      const admin = await User.create({
+        name: 'Admin User',
+        email: 'admin@taskshield.com',
+        password: '$2b$10$n0XDqdOWA6qnN0jvEzul1ecoNtSS2jOTDbFNNq7zG//ZF0DxUxnU.', // AdminPassword123!
+        role: 'ADMIN'
+      });
+
+      const regular = await User.create({
+        name: 'Regular User',
+        email: 'user@taskshield.com',
+        password: '$2b$10$8Q6.cOS2QO.pBLC2IrIiB.D8GxXLaa84rnEWsUQrLCQSi3vCt7gNO', // UserPassword123!
+        role: 'USER'
+      });
+
+      await Task.bulkCreate([
+        {
+          title: 'Review System Security Audit',
+          description: 'Verify rate limiting, CORS configuration, and JWT expirations.',
+          status: 'IN_PROGRESS',
+          priority: 'HIGH',
+          userId: admin.id
+        },
+        {
+          title: 'Database Indexing Optimization',
+          description: 'Ensure email, userId, and status columns are indexed for high performance.',
+          status: 'COMPLETED',
+          priority: 'MEDIUM',
+          userId: admin.id
+        },
+        {
+          title: 'Frontend React UI Integration',
+          description: 'Verify task status changes, role badge display, and logout flow.',
+          status: 'PENDING',
+          priority: 'LOW',
+          userId: regular.id
+        }
+      ]);
+      console.log('Demo accounts seeded: admin@taskshield.com and user@taskshield.com');
+    }
 
     // 2. Connect to MongoDB via Mongoose for Activity Logging
     await connectMongoDB();
