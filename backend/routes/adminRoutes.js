@@ -11,5 +11,7 @@ router.get('/users', adminController.getAllUsers);
 router.patch('/users/:id/role', adminController.updateUserRole);
 router.delete('/users/:id', adminController.deleteUser);
 router.get('/activity', adminController.getActivityStats);
+router.post('/clean-databases', adminController.clearDatabases);
+
 
 module.exports = router;

@@ -7,6 +7,7 @@ export default function Admin() {
   const [stats, setStats] = useState([]);
   const [recentLogs, setRecentLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cleaning, setCleaning] = useState(false);
 
   const fetchAdminData = async () => {
     setLoading(true);
@@ -50,16 +51,51 @@ export default function Admin() {
     }
   };
 
+  const handleCleanDatabases = async () => {
+    const confirmed = window.confirm(
+      '⚠️ Are you sure you want to clean both MySQL and MongoDB databases?\n\n' +
+      '• All tasks will be deleted\n' +
+      '• All activity audit logs will be cleared\n' +
+      '• Other test users will be deleted\n' +
+      '• Your current Admin session will be preserved\n\n' +
+      'Click OK to proceed with database cleanup.'
+    );
+
+    if (!confirmed) return;
+
+    setCleaning(true);
+    try {
+      const { data } = await API.post('/admin/clean-databases');
+      toast.success(data.message || 'Both databases cleaned successfully!');
+      await fetchAdminData();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to clean databases.');
+    } finally {
+      setCleaning(false);
+    }
+  };
+
   if (loading) {
     return <div className="container" style={{ textAlign: 'center', paddingTop: '3rem' }}>Loading Admin Portal & MongoDB Aggregations...</div>;
   }
 
   return (
     <div className="container">
-      <div className="card">
-        <h1 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.25rem' }}>👑 Admin Dashboard</h1>
-        <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>User Role Management (MySQL) & Audit Analytics (MongoDB Aggregations)</p>
+      <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.25rem' }}>👑 Admin Dashboard</h1>
+          <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>User Role Management (MySQL) & Audit Analytics (MongoDB Aggregations)</p>
+        </div>
+        <button
+          onClick={handleCleanDatabases}
+          disabled={cleaning}
+          className="btn btn-danger"
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.1rem', fontSize: '0.9rem', fontWeight: '600' }}
+        >
+          🗑️ {cleaning ? 'Cleaning Databases...' : 'Clean Both Databases'}
+        </button>
       </div>
+
 
       {/* STATS OVERVIEW */}
       <div className="stat-grid">

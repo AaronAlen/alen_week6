@@ -1,7 +1,8 @@
 const createError = require('http-errors');
-const { User } = require('../models');
+const { User, Task } = require('../models');
 const ActivityLog = require('../models/ActivityLog');
 const appEventEmitter = require('../events/taskEvents');
+const { Op } = require('sequelize');
 
 /**
  * ADMIN CONTROLLER
@@ -90,3 +91,44 @@ exports.getActivityStats = async (req, res) => {
     recentLogs
   });
 };
+
+// CLEAN / RESET BOTH DATABASES (MySQL + MongoDB)
+exports.clearDatabases = async (req, res) => {
+  const currentAdminId = req.user.userId;
+
+  // 1. MySQL: Delete all tasks
+  const deletedTasks = await Task.destroy({ where: {} });
+
+  // 2. MySQL: Delete other users (keep the active logged-in admin so session isn't broken)
+  const deletedUsers = await User.destroy({
+    where: {
+      id: { [Op.ne]: currentAdminId }
+    }
+  });
+
+  // 3. MongoDB: Delete all activity/audit logs
+  const mongoResult = await ActivityLog.deleteMany({});
+
+  // 4. Record new initial clean audit event in MongoDB
+  await ActivityLog.create({
+    userId: currentAdminId,
+    action: 'DATABASES_CLEARED',
+    details: {
+      tasksDeleted: deletedTasks,
+      usersDeleted: deletedUsers,
+      logsDeleted: mongoResult.deletedCount,
+      adminId: currentAdminId,
+      timestamp: new Date()
+    }
+  });
+
+  return res.json({
+    message: 'Both MySQL and MongoDB databases have been successfully cleaned!',
+    summary: {
+      tasksDeleted: deletedTasks,
+      usersDeleted: deletedUsers,
+      logsDeleted: mongoResult.deletedCount
+    }
+  });
+};
+
