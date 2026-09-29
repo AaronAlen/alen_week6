@@ -1,12 +1,16 @@
+const dns = require('dns');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-/**
- * MONGODB CONNECTION SETUP (MONGOOSE)
- * 
- * We use MongoDB specifically for flexible, append-only activity/audit logs.
- * Mongoose handles connection management and provides document schema validation.
- */
+// Configure DNS resolution for MongoDB Atlas SRV lookups (resolves querySrv ENOTFOUND/IPv6 issues)
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4']);
+} catch (err) {
+  console.warn('Could not set custom DNS servers:', err.message);
+}
 
 const connectMongoDB = async () => {
   try {
