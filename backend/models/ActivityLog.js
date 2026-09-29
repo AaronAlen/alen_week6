@@ -21,7 +21,8 @@ const activityLogSchema = new mongoose.Schema({
       'TASK_CREATED',
       'TASK_UPDATED',
       'TASK_DELETED',
-      'ROLE_CHANGED'
+      'ROLE_CHANGED',
+      'DATABASES_CLEARED'
     ]
   },
   details: {

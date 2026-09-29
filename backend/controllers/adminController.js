@@ -110,17 +110,21 @@ exports.clearDatabases = async (req, res) => {
   const mongoResult = await ActivityLog.deleteMany({});
 
   // 4. Record new initial clean audit event in MongoDB
-  await ActivityLog.create({
-    userId: currentAdminId,
-    action: 'DATABASES_CLEARED',
-    details: {
-      tasksDeleted: deletedTasks,
-      usersDeleted: deletedUsers,
-      logsDeleted: mongoResult.deletedCount,
-      adminId: currentAdminId,
-      timestamp: new Date()
-    }
-  });
+  try {
+    await ActivityLog.create({
+      userId: currentAdminId,
+      action: 'DATABASES_CLEARED',
+      details: {
+        tasksDeleted: deletedTasks,
+        usersDeleted: deletedUsers,
+        logsDeleted: mongoResult.deletedCount,
+        adminId: currentAdminId,
+        timestamp: new Date()
+      }
+    });
+  } catch (logErr) {
+    console.error('Failed to record DATABASES_CLEARED log:', logErr.message);
+  }
 
   return res.json({
     message: 'Both MySQL and MongoDB databases have been successfully cleaned!',
