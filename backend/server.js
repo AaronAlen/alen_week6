@@ -25,24 +25,40 @@ const startServer = async () => {
     await sequelize.sync({ alter: false });
     console.log('MySQL Models & Indexes synced.');
 
-    // Auto-seed initial demo accounts if database is empty
-    const userCount = await User.count();
-    if (userCount === 0) {
-      console.log('Seeding initial demo accounts into database...');
-      const admin = await User.create({
+    // Ensure Demo Admin Account always exists
+    const adminEmail = 'admin@taskshield.com';
+    let admin = await User.findOne({ where: { email: adminEmail } });
+    if (!admin) {
+      console.log('Creating demo admin account (admin@taskshield.com)...');
+      admin = await User.create({
         name: 'Admin User',
-        email: 'admin@taskshield.com',
+        email: adminEmail,
         password: '$2b$10$n0XDqdOWA6qnN0jvEzul1ecoNtSS2jOTDbFNNq7zG//ZF0DxUxnU.', // AdminPassword123!
         role: 'ADMIN'
       });
+      console.log('Demo admin created.');
+    } else if (admin.role !== 'ADMIN') {
+      admin.role = 'ADMIN';
+      await admin.save();
+    }
 
-      const regular = await User.create({
+    // Ensure Demo Regular User Account exists
+    const userEmail = 'user@taskshield.com';
+    let regular = await User.findOne({ where: { email: userEmail } });
+    if (!regular) {
+      console.log('Creating demo regular user account (user@taskshield.com)...');
+      regular = await User.create({
         name: 'Regular User',
-        email: 'user@taskshield.com',
+        email: userEmail,
         password: '$2b$10$8Q6.cOS2QO.pBLC2IrIiB.D8GxXLaa84rnEWsUQrLCQSi3vCt7gNO', // UserPassword123!
         role: 'USER'
       });
+      console.log('Demo regular user created.');
+    }
 
+    // Seed sample tasks if no tasks exist
+    const taskCount = await Task.count();
+    if (taskCount === 0 && admin && regular) {
       await Task.bulkCreate([
         {
           title: 'Review System Security Audit',
@@ -66,7 +82,7 @@ const startServer = async () => {
           userId: regular.id
         }
       ]);
-      console.log('Demo accounts seeded: admin@taskshield.com and user@taskshield.com');
+      console.log('Sample demo tasks created.');
     }
 
     // 2. Connect to MongoDB via Mongoose for Activity Logging

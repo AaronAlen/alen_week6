@@ -7,6 +7,7 @@ const authenticate = require('../middleware/authenticate');
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.post('/refresh', authController.refresh);
+router.get('/seed-admin', authController.seedAdmin);
 
 // Protected routes
 router.post('/logout', authenticate, authController.logout);

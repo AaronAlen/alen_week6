@@ -172,3 +172,41 @@ exports.getProfile = async (req, res) => {
 
   return res.json({ user });
 };
+
+// SEED / RESET DEMO ADMIN ACCOUNT
+exports.seedAdmin = async (req, res) => {
+  try {
+    const adminEmail = 'admin@taskshield.com';
+    const adminPassword = 'AdminPassword123!';
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+    let user = await User.findOne({ where: { email: adminEmail } });
+    if (user) {
+      user.name = 'Admin User';
+      user.password = hashedPassword;
+      user.role = 'ADMIN';
+      await user.save();
+    } else {
+      user = await User.create({
+        name: 'Admin User',
+        email: adminEmail,
+        password: hashedPassword,
+        role: 'ADMIN'
+      });
+    }
+
+    return res.json({
+      status: 'SUCCESS',
+      message: 'Admin account has been created/updated successfully!',
+      credentials: {
+        email: adminEmail,
+        password: adminPassword,
+        role: 'ADMIN'
+      }
+    });
+  } catch (error) {
+    console.error('Error seeding admin account:', error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
