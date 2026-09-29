@@ -51,22 +51,14 @@ export default function Admin() {
     }
   };
 
+  const [showCleanModal, setShowCleanModal] = useState(false);
+
   const handleCleanDatabases = async () => {
-    const confirmed = window.confirm(
-      '⚠️ Are you sure you want to clean both MySQL and MongoDB databases?\n\n' +
-      '• All tasks will be deleted\n' +
-      '• All activity audit logs will be cleared\n' +
-      '• Other test users will be deleted\n' +
-      '• Your current Admin session will be preserved\n\n' +
-      'Click OK to proceed with database cleanup.'
-    );
-
-    if (!confirmed) return;
-
     setCleaning(true);
     try {
       const { data } = await API.post('/admin/clean-databases');
       toast.success(data.message || 'Both databases cleaned successfully!');
+      setShowCleanModal(false);
       await fetchAdminData();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to clean databases.');
@@ -87,7 +79,7 @@ export default function Admin() {
           <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>User Role Management (MySQL) & Audit Analytics (MongoDB Aggregations)</p>
         </div>
         <button
-          onClick={handleCleanDatabases}
+          onClick={() => setShowCleanModal(true)}
           disabled={cleaning}
           className="btn btn-danger"
           style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.1rem', fontSize: '0.9rem', fontWeight: '600' }}
@@ -95,6 +87,7 @@ export default function Admin() {
           🗑️ {cleaning ? 'Cleaning Databases...' : 'Clean Both Databases'}
         </button>
       </div>
+
 
 
       {/* STATS OVERVIEW */}
@@ -194,6 +187,57 @@ export default function Admin() {
           </table>
         </div>
       </div>
+
+      {/* CUSTOM CONFIRMATION MODAL (Replaces browser default alert) */}
+      {showCleanModal && (
+        <div className="modal-overlay" onClick={() => !cleaning && setShowCleanModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-icon-badge">⚠️</div>
+              <div>
+                <h3 className="modal-title">Clean Both Databases?</h3>
+                <span style={{ fontSize: '0.8rem', color: '#f87171', fontWeight: '500' }}>Irreversible Reset</span>
+              </div>
+            </div>
+
+            <div className="modal-body">
+              <p>Are you sure you want to clean both <strong>MySQL</strong> (TiDB Cloud) and <strong>MongoDB</strong> (Atlas)?</p>
+              
+              <ul className="modal-checklist">
+                <li><span>🗑️</span> All tasks will be permanently deleted</li>
+                <li><span>📜</span> All activity & audit logs will be cleared</li>
+                <li><span>👥</span> Other test users will be deleted</li>
+                <li><span>🛡️</span> Your current Admin session will be preserved</li>
+              </ul>
+
+              <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '0.75rem' }}>
+                Both databases will be reset to a clean state ready for new tasks and testing.
+              </p>
+            </div>
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={cleaning}
+                onClick={() => setShowCleanModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                disabled={cleaning}
+                onClick={handleCleanDatabases}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                {cleaning ? 'Cleaning Databases...' : '🗑️ Yes, Clean Both Databases'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
